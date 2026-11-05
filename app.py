@@ -15,6 +15,44 @@ from scripts.colab_guidance import GUIDANCE
 ROOT = Path(__file__).resolve().parent
 st.set_page_config(page_title='Rice Leaf Check', page_icon='🌾', layout='wide')
 
+# Scope responsive overrides to the photo/results workspace.
+st.html('''
+<style>
+@media (max-width: 760px) {
+    .st-key-rice-workspace [data-testid="stHorizontalBlock"] {
+        flex-direction: column-reverse;
+        gap: 1.5rem;
+    }
+    .st-key-rice-workspace [data-testid="stColumn"] {
+        width: 100% !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    .st-key-rice-workspace [data-testid="stImage"] {
+        margin-inline: auto;
+    }
+    .st-key-rice-workspace [data-testid="stImage"] img {
+        display: block;
+        margin-inline: auto;
+        max-height: 300px;
+        object-fit: contain;
+    }
+    .st-key-rice-workspace [data-testid="stImageCaption"] {
+        text-align: center;
+    }
+    .st-key-photo-controls [data-testid="stVerticalBlock"] {
+        display: flex;
+        flex-direction: column;
+    }
+    .st-key-photo-controls [data-testid="stElementContainer"]:has([data-testid="stImage"]) {
+        order: -1;
+        align-self: center;
+        max-width: 100%;
+    }
+}
+</style>
+''')
+
 
 @st.cache_resource
 def load_model(model_bytes):
@@ -71,7 +109,10 @@ except Exception as error:
     st.stop()
 
 st.success('Your model is ready.')
-results_column, photo_column = st.columns([3, 2], gap='large')
+with st.container(key='rice-workspace'):
+    results_column, photo_column = st.columns([3, 1], gap='large', wrap=True)
+with photo_column:
+    photo_column = st.container(key='photo-controls')
 photo = photo_column.file_uploader('Choose a rice leaf photo', type=['jpg', 'jpeg', 'png'])
 if photo is None:
     photo_column.caption('Use a sharp close-up in natural light. Include the affected area of the leaf.')
@@ -89,9 +130,11 @@ except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombErro
     photo_column.error(f'Unable to open this photo: {error}')
     st.stop()
 
-photo_column.image(image, caption='Your uploaded leaf photo', width='stretch')
+preview = image.copy()
+preview.thumbnail((image.width, 300))
+photo_column.image(preview, caption='Your uploaded leaf photo', width='content')
 signature = hashlib.sha256(photo.getvalue() + model_bytes + names_bytes).hexdigest()
-if photo_column.button('Check leaf', type='primary'):
+if photo_column.button('Check leaf', type='primary', width='stretch'):
     st.session_state.pop('result', None)
     try:
         with st.spinner('Examining the leaf…'):
