@@ -1,0 +1,13 @@
+[theme]
+primaryColor = "#26734D"
+backgroundColor = "#FAFCF8"
+secondaryBackgroundColor = "#EDF3E9"
+textColor = "#20392B"
+font = "sans serif"
+
+[server]
+address = "127.0.0.1"
+maxUploadSize = 100
+
+[browser]
+gatherUsageStats = false
